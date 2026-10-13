@@ -193,18 +193,58 @@
       linear-gradient(90deg, rgba(10,10,10,.92) 0%, rgba(10,10,10,.42) 42%, rgba(10,10,10,.05) 75%);
     z-index:0;
   }
-  .hero-photo{
-    position:absolute;inset:0;z-index:-1;overflow:hidden;
+  /* ---------- HERO AWARDS (replaces the old hero photo) ---------- */
+  .hero{overflow:hidden}
+  .hero-awards{
+    position:absolute;z-index:1;
+    right:clamp(20px,5vw,80px);top:13%;bottom:7%;width:min(34vw,560px);
+    display:flex;flex-direction:column;
   }
-  .hero-photo::after{
-    content:"";position:absolute;inset:-4%;
-    background:#111 center 15%/cover;
-    background-image:url('assets/photo-hero.jpg');
-    animation:kenburns 22s ease-in-out infinite alternate;
+  .hero-awards::before{
+    content:"";position:absolute;inset:-8% -14%;z-index:-1;
+    background:radial-gradient(closest-side,rgba(229,9,20,.26),transparent 75%);
   }
-  @keyframes kenburns{
-    0%{transform:scale(1) translate(0,0)}
-    100%{transform:scale(1.08) translate(-1.2%,-1%)}
+  .award-stack{flex:1;min-height:0;display:grid}
+  .award{
+    grid-area:1/1;display:grid;grid-template-rows:minmax(0,1fr) auto;
+    opacity:0;pointer-events:none;transition:opacity .8s ease;
+  }
+  .award.on{opacity:1;pointer-events:auto}
+  .award-img{position:relative;min-height:0}
+  .award-img img{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+    filter:drop-shadow(0 20px 30px rgba(0,0,0,.7));
+  }
+  .award.on .award-img img{animation:awardRise 1.1s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes awardRise{
+    from{opacity:0;transform:translateY(24px) scale(.94)}
+    to{opacity:1;transform:none}
+  }
+  .award-cap{text-align:center;padding-top:14px}
+  .award-cap b{
+    display:block;font-family:'Bebas Neue',sans-serif;font-weight:400;
+    font-size:34px;line-height:1;letter-spacing:1px;
+    color:var(--accent);text-shadow:2px 2px 0 #000;
+  }
+  .award-cap span{display:block;margin-top:6px;font-size:13.5px;line-height:1.5;color:#d6d6d0}
+  .award-tabs{display:flex;justify-content:center;gap:26px;margin-top:18px}
+  .award-tabs button{
+    all:unset;cursor:pointer;position:relative;padding-bottom:8px;
+    font-size:12px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#a8a8a0;
+  }
+  .award-tabs button.on{color:#fff}
+  .award-tabs button:focus-visible{outline:2px solid #fff;outline-offset:4px}
+  .award-tabs button::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+    background:var(--accent);transform:scaleX(0);transform-origin:left;
+  }
+  .award-tabs button.on::after{animation:awardFill 7s linear forwards}
+  @keyframes awardFill{to{transform:scaleX(1)}}
+  @media (max-width:1000px){
+    .hero{height:auto;min-height:92vh;flex-direction:column;justify-content:flex-end;align-items:stretch;padding-top:84px}
+    .hero-awards{position:relative;inset:auto;width:100%;height:44vh;min-height:320px;margin-bottom:22px}
+    .award-cap b{font-size:28px}
+    .award-tabs{gap:18px;margin-top:12px}
   }
   .hero-content{position:relative;z-index:1;max-width:640px}
   .hero-eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:16px}
@@ -393,7 +433,27 @@
 
 <!-- ================= HERO ================= -->
 <header class="hero" id="home">
-  <div class="hero-photo"></div>
+  <div class="hero-awards" aria-label="Awards and achievements">
+    <div class="award-stack">
+      <figure class="award on">
+        <div class="award-img"><img src="assets/awards/scholar-badge.webp" alt="Scholar Badge 2020-21, Delhi Public School Ruby Park"></div>
+        <figcaption class="award-cap"><b>Scholar Badge 2020–21</b><span>Delhi Public School Ruby Park, Kolkata</span></figcaption>
+      </figure>
+      <figure class="award">
+        <div class="award-img"><img src="assets/awards/trophy-runner-up.webp" alt="Runner Up trophy, Inter-Departmental Badminton Tournament 2024-25"></div>
+        <figcaption class="award-cap"><b>Runner Up</b><span>Inter-Departmental Badminton Tournament 2024–25<br>St. Thomas' College of Engineering &amp; Technology</span></figcaption>
+      </figure>
+      <figure class="award">
+        <div class="award-img"><img src="assets/awards/medal-winner.webp" alt="ICBT Winner medal"></div>
+        <figcaption class="award-cap"><b>ICBT Winner</b><span>Inter Club Best Tracker · 100m Sprint</span></figcaption>
+      </figure>
+    </div>
+    <div class="award-tabs" role="tablist">
+      <button class="on" role="tab" aria-selected="true">Scholar Badge</button>
+      <button role="tab" aria-selected="false">Runner Up</button>
+      <button role="tab" aria-selected="false">Winner</button>
+    </div>
+  </div>
   <div class="hero-content">
     <div class="hero-eyebrow"><span class="mini-emblem"></span><span>PORTFOLIO</span></div>
     <div class="hero-rank">#1 Portfolio in Kolkata Today</div>
@@ -586,6 +646,30 @@
 </div>
 
 <script>
+  // ---------- hero awards carousel ----------
+  (() => {
+    const items = [...document.querySelectorAll('.award')];
+    const tabs  = [...document.querySelectorAll('.award-tabs button')];
+    let n = 0, timer, started = false;
+    const show = k => {
+      n = k;
+      items.forEach((e, j) => e.classList.toggle('on', j === k));
+      tabs.forEach((t, j) => {
+        t.classList.remove('on'); t.setAttribute('aria-selected', j === k);
+        if (j === k) { void t.offsetWidth; t.classList.add('on'); }
+      });
+    };
+    const run = () => {
+      clearInterval(timer);
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches)
+        timer = setInterval(() => show((n + 1) % items.length), 7000);
+    };
+    tabs.forEach((t, k) => t.addEventListener('click', () => { show(k); run(); }));
+    window.startAwards = () => { if (started) return; started = true; show(0); run(); };
+  })();
+</script>
+
+<script>
   // ---------- intro orchestration ----------
   const introEl = document.getElementById('intro');
   const typeEl = document.getElementById('typeName');
@@ -593,6 +677,7 @@
 
   function endIntro(){
     introEl.classList.add('hide');
+    if (window.startAwards) startAwards();
     document.body.classList.remove('locked');
     setTimeout(() => introEl.remove(), 650);
   }
